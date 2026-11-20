@@ -15,8 +15,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract CineFlow ZIP
-        run: unzip -o cineflow-ai-studio-pro-android.zip
+      - name: Extract CineFlow ZIP automatically
+        run: |
+          ls -la
+          for z in *.zip; do
+            [ -f "$z" ] && unzip -o "$z"
+          done
+          PKG_PATH=$(find . -maxdepth 3 -name "package.json" | head -n 1)
+          echo "Found package.json at: $PKG_PATH"
+          if [ -n "$PKG_PATH" ] && [ "$PKG_PATH" != "./package.json" ]; then
+            cp -rf "$(dirname "$PKG_PATH")"/* .
+          fi
+          ls -la
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
