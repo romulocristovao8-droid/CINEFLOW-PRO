@@ -1,0 +1,51 @@
+name: Build CineFlow Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract CineFlow ZIP
+        run: unzip -o cineflow-ai-studio-pro-android.zip
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install dependencies and generate Android project
+        run: |
+          npm install --no-audit --no-fund
+          npm install @capacitor/android --no-audit --no-fund
+          npx cap add android
+          npx cap sync android
+
+      - name: Accept SDK licenses and build Debug APK
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          cd android
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cineflow-ai-studio-pro-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
